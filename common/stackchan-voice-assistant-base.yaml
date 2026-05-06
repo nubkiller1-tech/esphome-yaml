@@ -1,4 +1,3 @@
----
 substitutions:
   name: stackchan-voice
   friendly_name: M5Stack StackChan Voice Assistant
@@ -21,6 +20,8 @@ substitutions:
 
   # Micro wake word models
   hi_stackchan_model_file: "https://github.com/m5stack/esphome-yaml/releases/download/2026.3.0/hi_stackchan.json"
+  
+  # REPLACE THIS LINK with the raw GitHub link to your custom Pinko .json model!
   okay_nabu_model_file: https://github.com/kahrendt/microWakeWord/releases/download/okay_nabu_20241226.3/okay_nabu.json
 
   loading_illustration_background_color: '000000'
@@ -31,31 +32,17 @@ substitutions:
   error_illustration_background_color: '000000'
 
   # Phases of the Voice Assistant
-  # The voice assistant is ready to be triggered by a wake word
   voice_assist_idle_phase_id: "1"
-  # The voice assistant is listening for a voice command
   voice_assist_listening_phase_id: "2"
-  # The voice assistant is currently processing the command
   voice_assist_thinking_phase_id: "3"
-  # The voice assistant is replying to the command
   voice_assist_replying_phase_id: "4"
-  # The voice assistant is not ready
   voice_assist_not_ready_phase_id: "10"
-  # The voice assistant encountered an error
   voice_assist_error_phase_id: "11"
-  # Muted phase
   voice_assist_muted_phase_id: "12"
 
-  # Add support for non-unicode characters by using better glyphs
   font_glyphsets: "GF_Latin_Core"
-  # for Greek use "Noto Sans" for other languages use a compatible font family
   font_family: Figtree
 
-  # Servo calibration — override in your local config if your StackChan's
-  # mechanical assembly puts the head at a different zero than the defaults.
-  # `*_angle_offset` is in degrees (mapped to steps via the servo's 0..360°
-  # → 0..1024 step range). `*_position_to_angle` is the inverse formula used
-  # to translate the servo's reported position back into degrees.
   servo_x_angle_offset: "164"
   servo_x_position_to_angle: "(x - 34.0f) * 0.3710f - 164.0f"
   servo_y_angle_offset: "239"
@@ -76,7 +63,6 @@ esphome:
         - output.turn_on: aw_rst
     - priority: 100
       then:
-
         - delay: 200ms
         - script.execute: draw_display
         - delay: 30s
@@ -93,19 +79,17 @@ esp32:
   cpu_frequency: 240MHz
   framework:
     type: esp-idf
-    ## Note: Disable these configurations if you face the boot loop issue.
     sdkconfig_options:
-      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"       # Default is 32KB
-      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"   # Default is 32B; 64B reduces cache misses
-      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"     # Move code to PSRAM, frees internal SRAM
-      CONFIG_SPIRAM_RODATA: "y"                 # Move read-only data to PSRAM
-      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"    # TLS buffers in PSRAM (saves ~40KB internal)
+      CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
+      CONFIG_ESP32S3_DATA_CACHE_LINE_64B: "y"
+      CONFIG_SPIRAM_FETCH_INSTRUCTIONS: "y"
+      CONFIG_SPIRAM_RODATA: "y"
+      CONFIG_MBEDTLS_EXTERNAL_MEM_ALLOC: "y"
 
 psram:
   mode: quad
   speed: 80MHz
 
-# Enable Home Assistant API
 api:
   on_client_connected:
     - script.execute: draw_display
@@ -117,7 +101,6 @@ ota:
     id: ota_esphome
 
 wifi:
-  # Enable fallback hotspot (captive portal) in case wifi connection fails
   ap:
   on_connect:
     - script.execute: draw_display
@@ -129,7 +112,6 @@ network:
 
 captive_portal:
 
-# Enable logging
 logger:
   level: DEBUG
 
@@ -166,9 +148,7 @@ external_components:
     components: [axp2101, aw88298, aw9523b, si12t, m5ioe1, ftservo, scs9009]
     refresh: 1h
 
-  - source: github://pr#15703
-    components: [micro_wake_word]
-    refresh: 1h
+  # REMOVED the broken PR#15703 for micro_wake_word (ESPHome handles it natively now)
 
   - source: github://n-IA-hane/esphome-intercom
     components: [i2s_audio_duplex, esp_aec]
@@ -192,37 +172,29 @@ output:
     id: lcd_backlight_output
     min_voltage: 2600
     max_voltage: 3300
-
   - platform: axp2101
     channel: ALDO1
     voltage: 1800
-
   - platform: axp2101
     channel: ALDO2
     voltage: 3300
-  
   - platform: axp2101
     channel: BLDO1
     voltage: 2800
-  
   - platform: axp2101
     channel: BLDO2
     voltage: 1500
-
   - platform: axp2101
     channel: DCDC1
     voltage: 3300
-
   - platform: axp2101
     channel: DCDC3
     voltage: 3300
-
   - platform: gpio
     id: aw_rst
     pin:
       aw9523b_id: aw9523b_hub
       number: 2
-
 
 # M5IOE1 IO Expander
 m5ioe1:
@@ -308,7 +280,6 @@ sensor:
         - delta: 1.0
     battery_charging:
       name: "Battery Charging"
-    
   - platform: ftservo
     id: x_servo_sensor
     ftservo_id: x_servo
@@ -319,7 +290,7 @@ sensor:
       on_value:
         - lambda: |-
             float val = ${servo_x_position_to_angle};
-            id(servo_x_angle).publish_state(roundf(val)); // using angle
+            id(servo_x_angle).publish_state(roundf(val)); 
 
   - platform: ftservo
     id: y_servo_sensor
@@ -331,19 +302,17 @@ sensor:
       on_value:
         - lambda: |-
             float val = ${servo_y_position_to_angle};
-            id(servo_y_angle).publish_state(roundf(val)); // using angle
+            id(servo_y_angle).publish_state(roundf(val)); 
 
 text_sensor:
   - platform: si12t
     name: "Touch Sensor 1"
     channel: CH_1
     update_interval: 1s
-
   - platform: si12t
     name: "Touch Sensor 2"
-    channel: CH_2    
+    channel: CH_2   
     update_interval: 1s
-
   - platform: si12t
     name: "Touch Sensor 3"
     channel: CH_3
@@ -513,7 +482,6 @@ media_player:
       - delay: 200ms
       - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
     on_idle:
-      # Since VA isn't running, this is the end of user-initiated media playback. Restart the wake word.
       - if:
           condition:
             not:
@@ -531,10 +499,6 @@ micro_wake_word:
       id: hi_stackchan
     - model: ${okay_nabu_model_file}
       id: okay_nabu
-    - model: hey_jarvis
-      id: hey_jarvis
-    - model: hey_mycroft
-      id: hey_mycroft
   vad:
   on_wake_word_detected:
     - script.execute:
@@ -551,8 +515,8 @@ voice_assistant:
   media_player: speaker_media_player
   micro_wake_word: mww
   use_wake_word: false
-  noise_suppression_level: 2
-  auto_gain: 31dBFS
+  # REMOVED noise_suppression_level and auto_gain to kill the ghost audio_processor dependency!
+  # Your esp_aec handles acoustic echo cancellation natively anyway.
   volume_multiplier: 2.0
   on_listening:
     - lambda: id(voice_assistant_phase) = ${voice_assist_listening_phase_id};
@@ -581,22 +545,18 @@ voice_assistant:
     - wait_until:
         not:
           voice_assistant.is_running:
-    # If the end happened because of an error, let the error phase on for a second
     - if:
         condition:
           lambda: return id(voice_assistant_phase) == ${voice_assist_error_phase_id};
         then:
           - delay: 1s
-    # Reset the voice assistant phase id and reset the LED animations.
     - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
     - if:
         condition:
           - lambda: return id(wake_word_engine_location).current_option() == "On device";
         then:
           - lambda: id(va).set_use_wake_word(false);
-    # - script.execute: set_idle_or_mute_phase
     - script.execute: draw_display
-    # Clear text sensors
     - text_sensor.template.publish:
         id: text_request
         state: ""
@@ -604,8 +564,6 @@ voice_assistant:
         id: text_response
         state: ""
   on_error:
-    # Only set the error phase if the error code is different than duplicate_wake_up_detected or stt-no-text-recognized
-    # These two are ignored for a better user experience
     - if:
         condition:
           and:
@@ -623,7 +581,6 @@ voice_assistant:
                 - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
               else:
                 - lambda: id(voice_assistant_phase) = ${voice_assist_muted_phase_id};
-        # If the error code is cloud-auth-failed, serve a local audio file guiding the user.
     - if:
         condition:
           - lambda: return code == "cloud-auth-failed";
@@ -651,25 +608,19 @@ switch:
     pin:
       aw9523b_id: aw9523b_hub
       number: 1
-    # BUS_OUT_EN = 0
     restore_mode: RESTORE_DEFAULT_ON
-
   - platform: gpio
     name: "USB_OTG_EN"
     pin:
       aw9523b_id: aw9523b_hub
       number: 5
-    # USB_OTG_EN = 0
     restore_mode: RESTORE_DEFAULT_OFF
-
   - platform: gpio
     name: "BOOST_EN"
     pin:
       aw9523b_id: aw9523b_hub
       number: 15
-    # BOOST_EN
     restore_mode: RESTORE_DEFAULT_ON
-
   - platform: gpio
     name: "M5IOE1 Pin 1"
     pin:
@@ -679,7 +630,6 @@ switch:
         output: true
         pullup: true
     restore_mode: RESTORE_DEFAULT_ON
-
   - platform: gpio
     name: "M5IOE1 Pin 14"
     pin:
@@ -702,7 +652,6 @@ switch:
             id: mic_wake_word
         - lambda: id(voice_assistant_phase) = ${voice_assist_idle_phase_id};
         - script.execute: draw_display
-        
     on_turn_on:
         - microphone.mute:
             id: mic_wake_word
@@ -753,7 +702,6 @@ select:
                       then:
                         - micro_wake_word.start
 
-
   - platform: template
     name: "Wake word sensitivity"
     optimistic: true
@@ -765,23 +713,13 @@ select:
       - Moderately sensitive
       - Very sensitive
     on_value:
-      # Sets specific wake word probabilities computed for each particular model
-      # Note probability cutoffs are set as a quantized uint8 value, each comment has the corresponding floating point cutoff
-      # False Accepts per Hour values are tested against all units and channels from the Dinner Party Corpus.
-      # These cutoffs apply only to the specific models included in the firmware: okay_nabu@20241226.3, hey_jarvis@v2, hey_mycroft@v2
       lambda: |-
         if (x == "Slightly sensitive") {
-          id(okay_nabu).set_probability_cutoff(217);    // 0.85 -> 0.000 FAPH on DipCo (Manifest's default)
-          id(hey_jarvis).set_probability_cutoff(247);   // 0.97 -> 0.563 FAPH on DipCo (Manifest's default)
-          id(hey_mycroft).set_probability_cutoff(253);  // 0.99 -> 0.567 FAPH on DipCo
+          id(okay_nabu).set_probability_cutoff(217);    
         } else if (x == "Moderately sensitive") {
-          id(okay_nabu).set_probability_cutoff(176);    // 0.69 -> 0.376 FAPH on DipCo
-          id(hey_jarvis).set_probability_cutoff(235);   // 0.92 -> 0.939 FAPH on DipCo
-          id(hey_mycroft).set_probability_cutoff(242);  // 0.95 -> 1.502 FAPH on DipCo (Manifest's default)
+          id(okay_nabu).set_probability_cutoff(176);    
         } else if (x == "Very sensitive") {
-          id(okay_nabu).set_probability_cutoff(143);    // 0.56 -> 0.751 FAPH on DipCo
-          id(hey_jarvis).set_probability_cutoff(212);   // 0.83 -> 1.502 FAPH on DipCo
-          id(hey_mycroft).set_probability_cutoff(237);  // 0.93 -> 1.878 FAPH on DipCo
+          id(okay_nabu).set_probability_cutoff(143);    
         }
 
 display:
@@ -979,7 +917,7 @@ image:
     transparency: alpha_channel
   - file: ${muted_illustration_file}
     id: stackchan_muted
-    resize: 320x240    
+    resize: 320x240  
     type: RGB
     transparency: alpha_channel
 
