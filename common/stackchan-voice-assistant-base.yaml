@@ -288,7 +288,7 @@ number:
       id: servo_y_angle
       name: "Servo Y Angle"
       min_value: 0
-      max_value: 90
+      max_value: 239
       use_raw_angle: false
       angle_offset: ${servo_y_angle_offset}
       step: 5
